@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../providers/dashboard_provider.dart';
 
@@ -85,13 +85,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           DataColumn(label: Text('Price')),
           DataColumn(label: Text('Status')),
         ],
-        rows: dashboard.recentBookings.map((b) => DataRow(cells: [
-          DataCell(Text(b.customerName)),
-          DataCell(Text('Lane ${b.laneNumber}')),
-          DataCell(Text(b.slotTime)),
-          DataCell(Text('\$${b.price.toStringAsFixed(0)}')),
-          DataCell(_statusChip(b.status)),
-        ])).toList(),
+        rows: [
+          ...dashboard.recentBookings.map((b) => DataRow(cells: [
+            DataCell(Text(b.customerName)),
+            DataCell(Text('Lane ${b.laneNumber}')),
+            DataCell(Text(b.slotTime)),
+            DataCell(Text('\$${b.price.toStringAsFixed(0)}')),
+            DataCell(_statusChip(b.status)),
+          ])),
+        ],
       ),
     );
   }

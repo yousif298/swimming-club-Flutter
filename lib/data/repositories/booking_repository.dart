@@ -1,5 +1,6 @@
 import '../../core/constants/api_constants.dart';
 import '../../core/network/api_client.dart';
+import '../models/booking_list_model.dart';
 import '../models/booking_model.dart';
 import '../models/mirror_model.dart';
 
@@ -28,6 +29,14 @@ class BookingRepository {
       },
     );
     return SlotStatusModel.fromJson(response.data);
+  }
+
+  Future<List<BookingListModel>> getAll({DateTime? date}) async {
+    final response = await _client.get(
+      ApiConstants.bookings,
+      queryParams: date != null ? {'date': date.toIso8601String().split('T').first} : null,
+    );
+    return (response.data as List).map((e) => BookingListModel.fromJson(e)).toList();
   }
 
   Future<BookingModel> create({
