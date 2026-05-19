@@ -9,6 +9,7 @@ import '../../presentation/screens/pools/pools_screen.dart';
 import '../../presentation/screens/mirror/mirror_screen.dart';
 import '../../presentation/screens/bookings/bookings_screen.dart';
 import '../../presentation/screens/payments/payments_screen.dart';
+import '../../presentation/screens/reports/reports_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -56,6 +57,10 @@ final routerProvider = GoRouter(
         GoRoute(
           path: '/payments',
           builder: (context, state) => const PaymentsScreen(),
+        ),
+        GoRoute(
+          path: '/reports',
+          builder: (context, state) => const ReportsScreen(),
         ),
       ],
     ),
@@ -113,6 +118,10 @@ class MainShell extends StatelessWidget {
                 icon: Icon(Icons.payments),
                 label: Text('Payments'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.assessment),
+                label: Text('Reports'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
@@ -129,6 +138,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/mirror')) return 3;
     if (location.startsWith('/bookings')) return 4;
     if (location.startsWith('/payments')) return 5;
+    if (location.startsWith('/reports')) return 6;
     return 0;
   }
 
@@ -140,6 +150,7 @@ class MainShell extends StatelessWidget {
       case 3: context.go('/mirror');
       case 4: context.go('/bookings');
       case 5: context.go('/payments');
+      case 6: context.go('/reports');
     }
   }
 }
