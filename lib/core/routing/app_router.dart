@@ -10,6 +10,9 @@ import '../../presentation/screens/mirror/mirror_screen.dart';
 import '../../presentation/screens/bookings/bookings_screen.dart';
 import '../../presentation/screens/payments/payments_screen.dart';
 import '../../presentation/screens/reports/reports_screen.dart';
+import '../../presentation/screens/booking_types/booking_types_screen.dart';
+import '../../presentation/screens/users/users_screen.dart';
+import '../../presentation/screens/pricing/pricing_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -61,6 +64,18 @@ final routerProvider = GoRouter(
         GoRoute(
           path: '/reports',
           builder: (context, state) => const ReportsScreen(),
+        ),
+        GoRoute(
+          path: '/pricing',
+          builder: (context, state) => const PricingScreen(),
+        ),
+        GoRoute(
+          path: '/booking-types',
+          builder: (context, state) => const BookingTypesScreen(),
+        ),
+        GoRoute(
+          path: '/users',
+          builder: (context, state) => const UsersScreen(),
         ),
       ],
     ),
@@ -122,6 +137,18 @@ class MainShell extends StatelessWidget {
                 icon: Icon(Icons.assessment),
                 label: Text('Reports'),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.attach_money),
+                label: Text('Pricing'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.category),
+                label: Text('Booking Types'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.manage_accounts),
+                label: Text('Users'),
+              ),
             ],
           ),
           const VerticalDivider(width: 1),
@@ -139,6 +166,9 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/bookings')) return 4;
     if (location.startsWith('/payments')) return 5;
     if (location.startsWith('/reports')) return 6;
+    if (location.startsWith('/pricing')) return 7;
+    if (location.startsWith('/booking-types')) return 8;
+    if (location.startsWith('/users')) return 9;
     return 0;
   }
 
@@ -151,6 +181,9 @@ class MainShell extends StatelessWidget {
       case 4: context.go('/bookings');
       case 5: context.go('/payments');
       case 6: context.go('/reports');
+      case 7: context.go('/pricing');
+      case 8: context.go('/booking-types');
+      case 9: context.go('/users');
     }
   }
 }

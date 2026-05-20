@@ -4,6 +4,7 @@ class ApiConstants {
   static const String customers = '/customers';
   static const String pools = '/pools';
   static const String lanes = '/pools/{poolId}/lanes';
+  static const String bookingTypes = '/bookingtypes';
   static const String bookings = '/bookings';
   static const String mirrorView = '/bookings/mirror';
   static const String slotStatus = '/bookings/slot-status';
