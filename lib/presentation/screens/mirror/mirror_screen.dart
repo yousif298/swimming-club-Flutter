@@ -451,7 +451,7 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
         if (type.hasSchedule) {
           final dayIndex = widget.date.weekday - 1;
           if (!_scheduleDays.any((d) => d['dayOfWeek'] == dayIndex)) {
-            _scheduleDays.add({'dayOfWeek': dayIndex, 'startTime': '09:00', 'endTime': '10:00'});
+            _scheduleDays.add({'dayOfWeek': dayIndex});
             _lockedDays.add(dayIndex);
           }
         } else {
@@ -505,13 +505,9 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
       if (existing >= 0) {
         _scheduleDays.removeAt(existing);
       } else {
-        _scheduleDays.add({'dayOfWeek': dayIndex, 'startTime': '09:00', 'endTime': '10:00'});
+        _scheduleDays.add({'dayOfWeek': dayIndex});
       }
     });
-  }
-
-  void _updateScheduleTime(int index, String field, String value) {
-    setState(() => _scheduleDays[index][field] = value);
   }
 
   void _updateMember(int index, String field, String value) {
@@ -564,8 +560,6 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
         scheduleDays: _showSchedule && _scheduleDays.isNotEmpty
             ? _scheduleDays.map((d) => {
                   'dayOfWeek': d['dayOfWeek'],
-                  'startTime': d['startTime'],
-                  'endTime': d['endTime'],
                 }).toList()
             : null,
       );
@@ -808,36 +802,8 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
                       }),
                     ),
                     if (_scheduleDays.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      const Text('Set Times:', style: TextStyle(fontWeight: FontWeight.w500)),
-                      ..._scheduleDays.asMap().entries.map((entry) {
-                        final i = entry.key;
-                        final d = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Row(
-                            children: [
-                              SizedBox(width: 60, child: Text(_dayNames[d['dayOfWeek'] as int], style: const TextStyle(fontSize: 13))),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  decoration: const InputDecoration(labelText: 'Start', isDense: true),
-                                  initialValue: d['startTime'] as String,
-                                  onChanged: (v) => _updateScheduleTime(i, 'startTime', v),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  decoration: const InputDecoration(labelText: 'End', isDense: true),
-                                  initialValue: d['endTime'] as String,
-                                  onChanged: (v) => _updateScheduleTime(i, 'endTime', v),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
+                      const SizedBox(height: 4),
+                      Text('Selected: ${_scheduleDays.length} day(s)', style: const TextStyle(fontSize: 13, color: Colors.grey)),
                     ],
                   ],
                 ],
