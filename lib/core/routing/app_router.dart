@@ -13,6 +13,7 @@ import '../../presentation/screens/reports/reports_screen.dart';
 import '../../presentation/screens/booking_types/booking_types_screen.dart';
 import '../../presentation/screens/users/users_screen.dart';
 import '../../presentation/screens/pricing/pricing_screen.dart';
+import '../../presentation/screens/members/members_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -64,6 +65,10 @@ final routerProvider = GoRouter(
         GoRoute(
           path: '/reports',
           builder: (context, state) => const ReportsScreen(),
+        ),
+        GoRoute(
+          path: '/members',
+          builder: (context, state) => const MembersScreen(),
         ),
         GoRoute(
           path: '/pricing',
@@ -138,6 +143,10 @@ class MainShell extends StatelessWidget {
                 label: Text('Reports'),
               ),
               NavigationRailDestination(
+                icon: Icon(Icons.people_outline),
+                label: Text('Members'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(Icons.attach_money),
                 label: Text('Pricing'),
               ),
@@ -166,9 +175,10 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/bookings')) return 4;
     if (location.startsWith('/payments')) return 5;
     if (location.startsWith('/reports')) return 6;
-    if (location.startsWith('/pricing')) return 7;
-    if (location.startsWith('/booking-types')) return 8;
-    if (location.startsWith('/users')) return 9;
+    if (location.startsWith('/members')) return 7;
+    if (location.startsWith('/pricing')) return 8;
+    if (location.startsWith('/booking-types')) return 9;
+    if (location.startsWith('/users')) return 10;
     return 0;
   }
 
@@ -181,9 +191,10 @@ class MainShell extends StatelessWidget {
       case 4: context.go('/bookings');
       case 5: context.go('/payments');
       case 6: context.go('/reports');
-      case 7: context.go('/pricing');
-      case 8: context.go('/booking-types');
-      case 9: context.go('/users');
+      case 7: context.go('/members');
+      case 8: context.go('/pricing');
+      case 9: context.go('/booking-types');
+      case 10: context.go('/users');
     }
   }
 }

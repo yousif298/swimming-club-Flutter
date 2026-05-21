@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/models/pool_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/booking_type_model.dart';
+import '../../../data/models/mirror_model.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../../data/repositories/customer_repository.dart';
 import '../../providers/mirror_provider.dart';
@@ -128,6 +129,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> {
                   final ms = slotMap['${lane.id}-${slot.id}'];
                   final booked = ms?.isBooked ?? false;
                   final customerName = ms?.customerName;
+                  final bookingColor = ms?.color;
                   return DataCell(
                     GestureDetector(
                       onTap: () => _showSlotDetail(context, mirror.poolId, lane.id, slot.id),
@@ -136,7 +138,9 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> {
                         height: 36,
                         decoration: BoxDecoration(
                           color: booked
-                              ? AppTheme.primaryGreen.withOpacity(0.2)
+                              ? (bookingColor != null && bookingColor.isNotEmpty
+                                  ? Color(int.parse(bookingColor.replaceFirst('#', '0xFF')))
+                                  : AppTheme.primaryGreen.withOpacity(0.2))
                               : AppTheme.slotAvailable.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
@@ -149,7 +153,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> {
                           child: booked
                               ? Text(
                                   customerName != null ? _initials(customerName) : '',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.primaryGreen),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
                                 )
                               : const Icon(Icons.add_circle_outline, color: AppTheme.slotAvailable, size: 18),
                         ),
@@ -233,6 +237,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> {
             laneId: laneId,
             slotId: slotId,
             date: _selectedDate,
+            timeSlots: mirror?.timeSlots,
           ),
         ),
       );
@@ -335,6 +340,7 @@ class _MirrorScreenState extends ConsumerState<MirrorScreen> {
 class QuickBookingSheet extends ConsumerStatefulWidget {
   final String poolId, laneId, slotId;
   final DateTime date;
+  final List<TimeSlotMirror>? timeSlots;
 
   const QuickBookingSheet({
     super.key,
@@ -342,6 +348,7 @@ class QuickBookingSheet extends ConsumerStatefulWidget {
     required this.laneId,
     required this.slotId,
     required this.date,
+    this.timeSlots,
   });
 
   @override
@@ -358,27 +365,31 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
   CustomerModel? _selectedCustomer;
   BookingTypeModel? _selectedType;
   String _paymentStatus = 'Paid';
+  String _selectedColor = '#4CAF50';
   bool _loading = false;
   List<CustomerModel> _customers = [];
   List<BookingTypeModel> _types = [];
   bool _typesLoading = true;
+  List<TimeSlotMirror> _timeSlots = [];
+  final Set<String> _selectedSlotIds = {};
+  final Set<String> _lockedSlotIds = {};
 
-  // Members
   final List<Map<String, dynamic>> _members = [];
-
-  // Schedule
+  final Set<int> _lockedDays = {};
   bool _showSchedule = false;
   int _durationMonths = 1;
   int _daysPerMonth = 4;
   final List<Map<String, dynamic>> _scheduleDays = [];
 
   final _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  final _colors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#F44336', '#00BCD4', '#FF5722', '#607D8B'];
 
   @override
   void initState() {
     super.initState();
     _searchCustomers();
     _loadTypes();
+    _loadTimeSlots();
   }
 
   @override
@@ -388,6 +399,20 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
     _titleCtrl.dispose();
     _coachCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTimeSlots() async {
+    if (widget.timeSlots != null) {
+      _timeSlots = widget.timeSlots!;
+    } else {
+      final mirror = ref.read(mirrorProvider).valueOrNull;
+      if (mirror != null) _timeSlots = mirror.timeSlots;
+    }
+    if (widget.slotId.isNotEmpty && _timeSlots.any((ts) => ts.id == widget.slotId)) {
+      _selectedSlotIds.add(widget.slotId);
+      _lockedSlotIds.add(widget.slotId);
+      _updatePrice();
+    }
   }
 
   Future<void> _loadTypes() async {
@@ -413,7 +438,7 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
     setState(() {
       _selectedType = type;
       if (type != null) {
-        _priceCtrl.text = type.defaultPrice.toStringAsFixed(0);
+        _updatePrice();
         _showSchedule = type.hasSchedule;
         if (type.hasCapacity && type.capacity != null) {
           _members.clear();
@@ -423,8 +448,15 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
         } else {
           _members.clear();
         }
-        if (!type.hasSchedule) {
+        if (type.hasSchedule) {
+          final dayIndex = widget.date.weekday - 1;
+          if (!_scheduleDays.any((d) => d['dayOfWeek'] == dayIndex)) {
+            _scheduleDays.add({'dayOfWeek': dayIndex, 'startTime': '09:00', 'endTime': '10:00'});
+            _lockedDays.add(dayIndex);
+          }
+        } else {
           _scheduleDays.clear();
+          _lockedDays.clear();
           _durationMonths = 1;
           _daysPerMonth = 4;
         }
@@ -432,11 +464,42 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
         _showSchedule = false;
         _members.clear();
         _scheduleDays.clear();
+        _lockedDays.clear();
       }
     });
   }
 
+  void _updatePrice() {
+    if (_selectedType == null) return;
+    final hours = _selectedSlotIds.length;
+    final rate = _selectedType!.defaultPrice;
+    final total = hours > 0 ? rate * hours : rate;
+    _priceCtrl.text = total.toStringAsFixed(0);
+  }
+
+  Set<String> get _bookedSlotIdsInLane {
+    final mirror = ref.read(mirrorProvider).valueOrNull;
+    if (mirror == null) return {};
+    return mirror.slots
+        .where((s) => s.laneId == widget.laneId && s.isBooked)
+        .map((s) => s.slotId)
+        .toSet();
+  }
+
+  void _toggleSlot(String slotId) {
+    if (_lockedSlotIds.contains(slotId)) return;
+    setState(() {
+      if (_selectedSlotIds.contains(slotId)) {
+        _selectedSlotIds.remove(slotId);
+      } else {
+        _selectedSlotIds.add(slotId);
+      }
+      _updatePrice();
+    });
+  }
+
   void _toggleDay(int dayIndex) {
+    if (_lockedDays.contains(dayIndex)) return;
     setState(() {
       final existing = _scheduleDays.indexWhere((d) => d['dayOfWeek'] == dayIndex);
       if (existing >= 0) {
@@ -464,6 +527,10 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a booking type')));
       return;
     }
+    if (_selectedSlotIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least one time slot')));
+      return;
+    }
     final price = double.tryParse(_priceCtrl.text);
     if (price == null || price <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a valid price')));
@@ -483,11 +550,12 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
       await _bookingRepo.create(
         customerId: _selectedCustomer!.id,
         laneId: widget.laneId,
-        slotId: widget.slotId,
+        slotIds: _selectedSlotIds.toList(),
         bookingDate: widget.date,
         bookingTypeId: _selectedType!.id,
         price: price,
         paymentStatus: _paymentStatus,
+        color: _selectedColor,
         title: _titleCtrl.text.isNotEmpty ? _titleCtrl.text : null,
         coachName: _coachCtrl.text.isNotEmpty ? _coachCtrl.text : null,
         durationMonths: _showSchedule ? _durationMonths : null,
@@ -587,14 +655,54 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
                   else
                     DropdownButtonFormField<BookingTypeModel>(
                       decoration: const InputDecoration(labelText: 'Booking Type'),
-                      items: _types.map((t) => DropdownMenuItem(value: t, child: Text('${t.name} (\$${t.defaultPrice.toStringAsFixed(0)})'))).toList(),
+                      items: _types.map((t) => DropdownMenuItem(value: t, child: Text('${t.name} (\$${t.defaultPrice.toStringAsFixed(0)}/hr)'))).toList(),
                       onChanged: _onTypeChanged,
                     ),
                   const SizedBox(height: 8),
+                  if (_timeSlots.isNotEmpty) ...[
+                    const Text('Select Time Slots (rate per hour):', style: TextStyle(fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      children: _timeSlots.map((ts) {
+                        final isBooked = _bookedSlotIdsInLane.contains(ts.id);
+                        final isLocked = _lockedSlotIds.contains(ts.id);
+                        return FilterChip(
+                          label: Row(mainAxisSize: MainAxisSize.min, children: [
+                            if (isLocked) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.lock, size: 12, color: Colors.white70)),
+                            Text(ts.display, style: TextStyle(fontSize: 12, color: isBooked ? Colors.grey : null, decoration: isBooked ? TextDecoration.lineThrough : null)),
+                          ]),
+                          selected: _selectedSlotIds.contains(ts.id) || isLocked,
+                          onSelected: isBooked ? null : (isLocked ? null : (_) => _toggleSlot(ts.id)),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Selected: ${_selectedSlotIds.length} hr(s)', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                  ],
                   TextField(
                     controller: _priceCtrl,
-                    decoration: const InputDecoration(labelText: 'Price (\$)', prefixIcon: Icon(Icons.attach_money)),
+                    decoration: InputDecoration(labelText: 'Total Price (\$)', prefixIcon: const Icon(Icons.attach_money), hintText: 'rate × hours'),
                     keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Booking Colour:', style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 6,
+                    children: _colors.map((c) => GestureDetector(
+                      onTap: () => setState(() => _selectedColor = c),
+                      child: Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(
+                          color: Color(int.parse(c.replaceFirst('#', '0xFF'))),
+                          shape: BoxShape.circle,
+                          border: _selectedColor == c ? Border.all(color: Colors.black, width: 3) : null,
+                        ),
+                      ),
+                    )).toList(),
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
@@ -686,12 +794,18 @@ class _QuickBookingSheetState extends ConsumerState<QuickBookingSheet> {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 4,
-                      children: List.generate(7, (i) => FilterChip(
-                        label: Text(_dayNames[i], style: const TextStyle(fontSize: 12)),
-                        selected: _scheduleDays.any((d) => d['dayOfWeek'] == i),
-                        onSelected: (_) => _toggleDay(i),
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      )),
+                      children: List.generate(7, (i) {
+                        final isLocked = _lockedDays.contains(i);
+                        return FilterChip(
+                          label: Row(mainAxisSize: MainAxisSize.min, children: [
+                            if (isLocked) const Padding(padding: EdgeInsets.only(right: 4), child: Icon(Icons.lock, size: 12, color: Colors.white70)),
+                            Text(_dayNames[i], style: const TextStyle(fontSize: 12)),
+                          ]),
+                          selected: _scheduleDays.any((d) => d['dayOfWeek'] == i) || isLocked,
+                          onSelected: isLocked ? null : (_) => _toggleDay(i),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        );
+                      }),
                     ),
                     if (_scheduleDays.isNotEmpty) ...[
                       const SizedBox(height: 8),

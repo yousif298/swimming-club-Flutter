@@ -93,13 +93,14 @@ class BookingRepository {
   Future<BookingModel> create({
     required String customerId,
     required String laneId,
-    required String slotId,
+    required List<String> slotIds,
     required DateTime bookingDate,
     required String bookingTypeId,
     required double price,
     required String paymentStatus,
     String? title,
     String? coachName,
+    String? color,
     int? durationMonths,
     int? daysPerMonth,
     List<Map<String, dynamic>>? members,
@@ -108,7 +109,7 @@ class BookingRepository {
     final data = <String, dynamic>{
       'customerId': customerId,
       'laneId': laneId,
-      'slotId': slotId,
+      'slotIds': slotIds,
       'bookingDate': bookingDate.toIso8601String().split('T').first,
       'bookingTypeId': bookingTypeId,
       'price': price,
@@ -116,12 +117,17 @@ class BookingRepository {
     };
     if (title != null) data['title'] = title;
     if (coachName != null) data['coachName'] = coachName;
+    if (color != null) data['color'] = color;
     if (durationMonths != null) data['durationMonths'] = durationMonths;
     if (daysPerMonth != null) data['daysPerMonth'] = daysPerMonth;
     if (members != null) data['members'] = members;
     if (scheduleDays != null) data['scheduleDays'] = scheduleDays;
     final response = await _client.post(ApiConstants.bookings, data: data);
     return BookingModel.fromJson(response.data);
+  }
+
+  Future<void> addMembers(String bookingId, List<Map<String, dynamic>> members) async {
+    await _client.post('${ApiConstants.bookings}/$bookingId/members', data: {'members': members});
   }
 
   Future<void> cancel(String id) async {

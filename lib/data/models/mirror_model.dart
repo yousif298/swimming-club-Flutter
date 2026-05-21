@@ -33,6 +33,7 @@ class MirrorSlotModel {
   final String? customerId;
   final String? customerName;
   final String? bookingType;
+  final String? color;
   final String status;
 
   MirrorSlotModel({
@@ -42,6 +43,7 @@ class MirrorSlotModel {
     this.customerId,
     this.customerName,
     this.bookingType,
+    this.color,
     required this.status,
   });
 
@@ -55,6 +57,7 @@ class MirrorSlotModel {
         customerId: json['customerId'] as String?,
         customerName: json['customerName'] as String?,
         bookingType: json['bookingType'] as String?,
+        color: json['color'] as String?,
         status: json['status'] as String,
       );
 }
