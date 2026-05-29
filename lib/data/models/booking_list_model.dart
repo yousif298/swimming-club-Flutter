@@ -7,6 +7,7 @@ class BookingListModel {
   final String bookingType;
   final double price;
   final String paymentStatus;
+  final String? color;
 
   BookingListModel({
     required this.id,
@@ -17,6 +18,7 @@ class BookingListModel {
     required this.bookingType,
     required this.price,
     required this.paymentStatus,
+    this.color,
   });
 
   factory BookingListModel.fromJson(Map<String, dynamic> json) => BookingListModel(
@@ -28,5 +30,6 @@ class BookingListModel {
         bookingType: json['bookingType'] as String,
         price: (json['price'] as num).toDouble(),
         paymentStatus: json['paymentStatus'] as String,
+        color: json['color'] as String?,
       );
 }

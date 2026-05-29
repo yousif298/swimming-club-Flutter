@@ -33,6 +33,7 @@ class MirrorSlotModel {
   final String? customerId;
   final String? customerName;
   final String? bookingType;
+  final String? color;
   final String status;
 
   MirrorSlotModel({
@@ -42,6 +43,7 @@ class MirrorSlotModel {
     this.customerId,
     this.customerName,
     this.bookingType,
+    this.color,
     required this.status,
   });
 
@@ -55,6 +57,7 @@ class MirrorSlotModel {
         customerId: json['customerId'] as String?,
         customerName: json['customerName'] as String?,
         bookingType: json['bookingType'] as String?,
+        color: json['color'] as String?,
         status: json['status'] as String,
       );
 }
@@ -75,13 +78,15 @@ class TimeSlotMirror {
   final String id;
   final String display;
   final int orderIndex;
+  final int? dayOfWeek;
 
-  TimeSlotMirror({required this.id, required this.display, required this.orderIndex});
+  TimeSlotMirror({required this.id, required this.display, required this.orderIndex, this.dayOfWeek});
 
   factory TimeSlotMirror.fromJson(Map<String, dynamic> json) => TimeSlotMirror(
         id: json['id'] as String,
         display: json['display'] as String,
         orderIndex: json['orderIndex'] as int,
+        dayOfWeek: json['dayOfWeek'] as int?,
       );
 }
 
