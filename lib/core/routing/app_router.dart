@@ -8,6 +8,8 @@ import '../../presentation/screens/customers/customers_screen.dart';
 import '../../presentation/screens/pools/pools_screen.dart';
 import '../../presentation/screens/mirror/mirror_screen.dart';
 import '../../presentation/screens/bookings/bookings_screen.dart';
+import '../../presentation/screens/booking_types/booking_types_screen.dart';
+import '../../presentation/screens/schedule_booking/schedule_booking_screen.dart';
 import '../../presentation/screens/payments/payments_screen.dart';
 import '../../presentation/screens/reports/reports_screen.dart';
 
@@ -53,6 +55,14 @@ final routerProvider = GoRouter(
         GoRoute(
           path: '/bookings',
           builder: (context, state) => const BookingsScreen(),
+        ),
+        GoRoute(
+          path: '/booking-types',
+          builder: (context, state) => const BookingTypesScreen(),
+        ),
+        GoRoute(
+          path: '/schedule-booking',
+          builder: (context, state) => const ScheduleBookingScreen(),
         ),
         GoRoute(
           path: '/payments',
@@ -111,6 +121,14 @@ class MainShell extends StatelessWidget {
                 label: Text('Mirror'),
               ),
               NavigationRailDestination(
+                icon: Icon(Icons.category),
+                label: Text('Booking Types'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.schedule),
+                label: Text('Schedule'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(Icons.book_online),
                 label: Text('Bookings'),
               ),
@@ -136,9 +154,11 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/customers')) return 1;
     if (location.startsWith('/pools')) return 2;
     if (location.startsWith('/mirror')) return 3;
-    if (location.startsWith('/bookings')) return 4;
-    if (location.startsWith('/payments')) return 5;
-    if (location.startsWith('/reports')) return 6;
+    if (location.startsWith('/booking-types')) return 4;
+    if (location.startsWith('/schedule-booking')) return 5;
+    if (location.startsWith('/bookings')) return 6;
+    if (location.startsWith('/payments')) return 7;
+    if (location.startsWith('/reports')) return 8;
     return 0;
   }
 
@@ -148,9 +168,11 @@ class MainShell extends StatelessWidget {
       case 1: context.go('/customers');
       case 2: context.go('/pools');
       case 3: context.go('/mirror');
-      case 4: context.go('/bookings');
-      case 5: context.go('/payments');
-      case 6: context.go('/reports');
+      case 4: context.go('/booking-types');
+      case 5: context.go('/schedule-booking');
+      case 6: context.go('/bookings');
+      case 7: context.go('/payments');
+      case 8: context.go('/reports');
     }
   }
 }
